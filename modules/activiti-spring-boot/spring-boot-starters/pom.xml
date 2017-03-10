@@ -23,6 +23,7 @@
         <module>activiti-spring-boot-starter-actuator</module>
         <module>activiti-spring-boot-starter-security</module>
         <module>activiti-spring-boot-starter-jpa</module>
+        <module>activiti-spring-boot-poc-rest-api</module>
     </modules>
     <dependencies>
         <dependency>
