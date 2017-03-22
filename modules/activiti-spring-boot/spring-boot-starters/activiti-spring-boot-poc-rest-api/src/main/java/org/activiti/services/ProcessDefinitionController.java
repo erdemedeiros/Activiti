@@ -16,19 +16,17 @@
 package org.activiti.services;
 
 import org.activiti.client.model.ProcessDefinition;
+import org.activiti.client.model.builder.ProcessDefinitionResourceBuilder;
 import org.activiti.engine.RepositoryService;
 import org.activiti.model.converter.ProcessDefinitionConverter;
-import org.activiti.model.converter.ResourcesBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
@@ -41,19 +39,19 @@ public class ProcessDefinitionController {
 
     private final ProcessDefinitionConverter processDefinitionConverter;
 
-    private final ResourcesBuilder resourcesBuilder;
+    private final ProcessDefinitionResourceBuilder processDefinitionResourceBuilder;
 
     @Autowired
-    public ProcessDefinitionController(RepositoryService repositoryService, ProcessDefinitionConverter processDefinitionConverter, ResourcesBuilder resourcesBuilder) {
+    public ProcessDefinitionController(RepositoryService repositoryService, ProcessDefinitionConverter processDefinitionConverter, ProcessDefinitionResourceBuilder processDefinitionResourceBuilder) {
         this.repositoryService = repositoryService;
         this.processDefinitionConverter = processDefinitionConverter;
-        this.resourcesBuilder = resourcesBuilder;
+        this.processDefinitionResourceBuilder = processDefinitionResourceBuilder;
     }
 
     @RequestMapping(method = RequestMethod.GET)
     public Resources<Resource<ProcessDefinition>> getProcesses() {
-        Link selfRel = linkTo(methodOn(getClass()).getProcesses()).withSelfRel();
-        return resourcesBuilder.build(repositoryService.createProcessDefinitionQuery().list(), processDefinitionConverter, selfRel);
+        List<org.activiti.engine.repository.ProcessDefinition> definitions = repositoryService.createProcessDefinitionQuery().list();
+        return processDefinitionResourceBuilder.build(processDefinitionConverter.from(definitions));
     }
 
 }

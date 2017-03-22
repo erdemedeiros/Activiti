@@ -13,17 +13,18 @@
  *
  */
 
-package org.activiti.model.converter;
+package org.activiti.client.model.builder;
+
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 
 import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
  */
-public interface ModelConverter <SOURCE, TARGET> {
+public interface ResourcesBuilder<RESOURCE_TYPE, PARAM_TYPE> extends ResourceBuilder<RESOURCE_TYPE, PARAM_TYPE> {
 
-    TARGET from(SOURCE source);
-
-    List<TARGET> from(List<SOURCE> sources);
+    Resources<Resource<RESOURCE_TYPE>> build(List<RESOURCE_TYPE> elements);
 
 }

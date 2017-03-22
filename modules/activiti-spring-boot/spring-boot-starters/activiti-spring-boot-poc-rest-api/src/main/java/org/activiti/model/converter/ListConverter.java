@@ -15,26 +15,23 @@
 
 package org.activiti.model.converter;
 
-import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.Resources;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
  */
 @Component
-public class ResourcesBuilder {
+public class ListConverter {
 
-    public <S, T> Resources<Resource<T>> build(Collection<S> content, ModelConverter<S, T> converter, Link ... links) {
-        ArrayList<Resource<T>> resources = new ArrayList<>();
-        for (S element : content) {
-            resources.add(new Resource<>(converter.from(element)));
+    public <SOURCE, TARGET> List<TARGET> from(List<SOURCE> sourceElements, ModelConverter<SOURCE, TARGET> elementConverter) {
+        List<TARGET> targetElements = new ArrayList<>();
+        for (SOURCE sourceElement : sourceElements) {
+            targetElements.add(elementConverter.from(sourceElement));
         }
-        return new Resources<>(resources, links);
+        return targetElements;
     }
 
 }

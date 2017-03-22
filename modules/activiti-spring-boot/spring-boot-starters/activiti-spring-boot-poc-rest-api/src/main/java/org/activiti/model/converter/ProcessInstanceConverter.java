@@ -16,13 +16,23 @@
 package org.activiti.model.converter;
 
 import org.activiti.engine.runtime.ProcessInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
  */
 @Component
 public class ProcessInstanceConverter implements ModelConverter<ProcessInstance, org.activiti.client.model.ProcessInstance> {
+
+    private final ListConverter listConverter;
+
+    @Autowired
+    public ProcessInstanceConverter(ListConverter listConverter) {
+        this.listConverter = listConverter;
+    }
 
     @Override
     public org.activiti.client.model.ProcessInstance from(ProcessInstance processInstance) {
@@ -35,6 +45,11 @@ public class ProcessInstanceConverter implements ModelConverter<ProcessInstance,
         clientObject.setEnded(processInstance.isEnded());
         clientObject.setSuspended(processInstance.isSuspended());
         return clientObject;
+    }
+
+    @Override
+    public List<org.activiti.client.model.ProcessInstance> from(List<ProcessInstance> processInstances) {
+        return listConverter.from(processInstances, this);
     }
 
 }

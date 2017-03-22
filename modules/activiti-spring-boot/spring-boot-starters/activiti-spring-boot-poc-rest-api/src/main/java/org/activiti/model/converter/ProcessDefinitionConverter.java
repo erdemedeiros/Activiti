@@ -16,13 +16,23 @@
 package org.activiti.model.converter;
 
 import org.activiti.client.model.ProcessDefinition;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
  */
 @Component
 public class ProcessDefinitionConverter implements ModelConverter<org.activiti.engine.repository.ProcessDefinition, ProcessDefinition> {
+
+    private final ListConverter listConverter;
+
+    @Autowired
+    public ProcessDefinitionConverter(ListConverter listConverter) {
+        this.listConverter = listConverter;
+    }
 
     @Override
     public ProcessDefinition from(org.activiti.engine.repository.ProcessDefinition source) {
@@ -33,6 +43,11 @@ public class ProcessDefinitionConverter implements ModelConverter<org.activiti.e
         processDefinition.setVersion(source.getVersion());
         processDefinition.setDeploymentId(source.getDeploymentId());
         return processDefinition;
+    }
+
+    @Override
+    public List<ProcessDefinition> from(List<org.activiti.engine.repository.ProcessDefinition> processDefinitions) {
+        return listConverter.from(processDefinitions, this);
     }
 
 }

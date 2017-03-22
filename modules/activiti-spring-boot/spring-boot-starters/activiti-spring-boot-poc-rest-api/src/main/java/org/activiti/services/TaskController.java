@@ -16,11 +16,10 @@
 package org.activiti.services;
 
 import org.activiti.client.model.Task;
+import org.activiti.client.model.builder.TaskResourceBuilder;
 import org.activiti.engine.TaskService;
-import org.activiti.model.converter.ResourcesBuilder;
 import org.activiti.model.converter.TaskConverter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
@@ -35,9 +34,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
-
 /**
  * @author Elias Ricken de Medeiros
  */
@@ -46,44 +42,33 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 public class TaskController {
 
     private final TaskService taskService;
-
     private final TaskConverter taskConverter;
-    private ResourcesBuilder resourcesBuilder;
+    private final TaskResourceBuilder taskResourceBuilder;
 
     @Autowired
-    public TaskController(TaskService taskService, TaskConverter taskConverter, ResourcesBuilder resourcesBuilder) {
+    public TaskController(TaskService taskService, TaskConverter taskConverter, TaskResourceBuilder taskResourceBuilder) {
         this.taskService = taskService;
         this.taskConverter = taskConverter;
-        this.resourcesBuilder = resourcesBuilder;
+        this.taskResourceBuilder = taskResourceBuilder;
     }
 
     @RequestMapping(method = RequestMethod.GET)
     public Resources<Resource<Task>> getTasks() {
         List<org.activiti.engine.task.Task> tasks = taskService.createTaskQuery().list();
-        Link selfRel = linkTo(methodOn(getClass()).getTasks()).withSelfRel();
-        return resourcesBuilder.build(tasks, taskConverter, selfRel);
+        return taskResourceBuilder.build(taskConverter.from(tasks));
     }
 
     @RequestMapping(value = "/{taskId}", method = RequestMethod.GET)
     public Resource<Task> getTask(@PathVariable String taskId) {
         org.activiti.engine.task.Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-        Link selfRel = buildTaskSelfLink(taskId);
-        Link processInstanceRel = linkTo(methodOn(ProcessInstanceController.class).getProcessInstance(task.getProcessInstanceId())).withRel("processInstance");
-        Link claimRel = linkTo(methodOn(getClass()).claimTask(taskId, null)).withRel("claim");
-        return new Resource<>(taskConverter.from(task), selfRel, claimRel, processInstanceRel);
-    }
-
-    private Link buildTaskSelfLink(@PathVariable String taskId) {
-        return linkTo(methodOn(getClass()).getTask(taskId)).withSelfRel();
+        return taskResourceBuilder.build(taskConverter.from(task));
     }
 
     @RequestMapping(value = "/{taskId}/claim", method = RequestMethod.POST)
     public Resource<Task> claimTask(@PathVariable String taskId, @RequestParam("assignee") String assignee) {
         taskService.claim(taskId, assignee);
-        Link taskSelfLink = buildTaskSelfLink(taskId);
-        Link completeRel = linkTo(methodOn(getClass()).completeTask(taskId, null)).withRel("complete");
         Task task = taskConverter.from(taskService.createTaskQuery().taskId(taskId).singleResult());
-        return  new Resource<>(task, taskSelfLink, completeRel);
+        return  taskResourceBuilder.build(task);
     }
 
     @RequestMapping(value = "/{taskId}/complete", method = RequestMethod.POST)

@@ -16,13 +16,23 @@
 package org.activiti.model.converter;
 
 import org.activiti.client.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
  */
 @Component
 public class UserConverter implements ModelConverter<org.activiti.engine.identity.User, User> {
+
+    private final ListConverter listConverter;
+
+    @Autowired
+    public UserConverter(ListConverter listConverter) {
+        this.listConverter = listConverter;
+    }
 
     @Override
     public User from(org.activiti.engine.identity.User user) {
@@ -32,6 +42,11 @@ public class UserConverter implements ModelConverter<org.activiti.engine.identit
         userDTO.setUsername(user.getId());
         userDTO.setEmail(user.getEmail());
         return userDTO;
+    }
+
+    @Override
+    public List<User> from(List<org.activiti.engine.identity.User> users) {
+        return listConverter.from(users, this);
     }
 
 }

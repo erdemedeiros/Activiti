@@ -16,13 +16,23 @@
 package org.activiti.model.converter;
 
 import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
  */
 @Component
 public class TaskConverter implements ModelConverter<Task, org.activiti.client.model.Task> {
+
+    private final ListConverter listConverter;
+
+    @Autowired
+    public TaskConverter(ListConverter listConverter) {
+        this.listConverter = listConverter;
+    }
 
     @Override
     public org.activiti.client.model.Task from(Task task) {
@@ -41,6 +51,11 @@ public class TaskConverter implements ModelConverter<Task, org.activiti.client.m
         clientTask.setProcessDefinitionId(task.getProcessDefinitionId());
         clientTask.setProcessInstanceId(task.getProcessInstanceId());
         return clientTask;
+    }
+
+    @Override
+    public List<org.activiti.client.model.Task> from(List<Task> tasks) {
+        return listConverter.from(tasks, this);
     }
 
 }

@@ -17,12 +17,11 @@ package org.activiti.services;
 
 import org.activiti.client.model.ExtendedProcessInstance;
 import org.activiti.client.model.ProcessInstance;
+import org.activiti.client.model.builder.ProcessInstanceResourceBuilder;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.runtime.ProcessInstanceBuilder;
 import org.activiti.model.converter.ProcessInstanceConverter;
-import org.activiti.model.converter.ResourcesBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,9 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
-
 /**
  * @author Elias Ricken de Medeiros
  */
@@ -43,24 +39,23 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 @RequestMapping(value = "/api/runtime/process-instances", produces = "application/hal+json")
 public class ProcessInstanceController {
 
-    private final ResourcesBuilder resourcesBuilder;
-
     private final ProcessInstanceConverter processInstanceConverter;
 
     private final RuntimeService runtimeService;
 
+    private final ProcessInstanceResourceBuilder processInstanceResourceBuilder;
+
     @Autowired
-    public ProcessInstanceController(ResourcesBuilder resourcesBuilder, ProcessInstanceConverter processInstanceConverter, RuntimeService runtimeService) {
-        this.resourcesBuilder = resourcesBuilder;
+    public ProcessInstanceController(ProcessInstanceConverter processInstanceConverter, RuntimeService runtimeService, ProcessInstanceResourceBuilder processInstanceResourceBuilder) {
         this.processInstanceConverter = processInstanceConverter;
         this.runtimeService = runtimeService;
+        this.processInstanceResourceBuilder = processInstanceResourceBuilder;
     }
 
     @RequestMapping(method = RequestMethod.GET)
     public Resources<Resource<ProcessInstance>> getProcessInstances(){
         List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().list();
-        Link selfRel = linkTo(methodOn(getClass()).getProcessInstances()).withSelfRel();
-        return resourcesBuilder.build(processInstances, processInstanceConverter, selfRel);
+        return processInstanceResourceBuilder.build(processInstanceConverter.from(processInstances));
     }
 
     @RequestMapping(method = RequestMethod.POST)
@@ -68,26 +63,14 @@ public class ProcessInstanceController {
         ProcessInstanceBuilder builder = runtimeService.createProcessInstanceBuilder();
         builder.processDefinitionKey(processInstance.getProcessDefinitionKey());
         builder.variables(processInstance.getVariables());
-        org.activiti.engine.runtime.ProcessInstance instance = builder.start();
 
-        Link processInstancesRel = linkTo(methodOn(getClass()).getProcessInstances()).withRel("processInstances");
-
-        return new Resource<>(processInstanceConverter.from(instance), processInstanceSelfLink(instance.getProcessInstanceId()), linkToVariables(instance), processInstancesRel);
-    }
-
-    private Link linkToVariables(org.activiti.engine.runtime.ProcessInstance instance) {
-        return linkTo(methodOn(ProcessInstanceVariableController.class).getVariables(instance.getProcessInstanceId())).withRel("variables");
+        return processInstanceResourceBuilder.build(processInstanceConverter.from(builder.start()));
     }
 
     @RequestMapping(value = "/{processInstanceId}", method = RequestMethod.GET)
     public Resource<ProcessInstance> getProcessInstance(@PathVariable String processInstanceId){
         org.activiti.engine.runtime.ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
-        Link selfRel = processInstanceSelfLink(processInstanceId);
-        return new Resource<>(processInstanceConverter.from(processInstance), selfRel, linkToVariables(processInstance));
-    }
-
-    private Link processInstanceSelfLink(String processInstanceId) {
-        return linkTo(methodOn(getClass()).getProcessInstance(processInstanceId)).withSelfRel();
+        return processInstanceResourceBuilder.build(processInstanceConverter.from(processInstance));
     }
 
 }

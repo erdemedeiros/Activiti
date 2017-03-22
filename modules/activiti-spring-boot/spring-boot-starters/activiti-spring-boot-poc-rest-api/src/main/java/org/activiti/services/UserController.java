@@ -16,13 +16,12 @@
 package org.activiti.services;
 
 import org.activiti.client.model.User;
+import org.activiti.client.model.builder.UserResourceBuilder;
 import org.activiti.engine.ActivitiIllegalArgumentException;
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.engine.IdentityService;
-import org.activiti.model.converter.ResourcesBuilder;
 import org.activiti.model.converter.UserConverter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,9 +29,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 /**
  * @author Elias Ricken de Medeiros
@@ -46,13 +42,13 @@ public class UserController {
 
     private final UserConverter userConverter;
 
-    private final ResourcesBuilder resourcesBuilder;
+    private final UserResourceBuilder userResourceBuilder;
 
     @Autowired
-    public UserController(IdentityService identityService, UserConverter userConverter, ResourcesBuilder resourcesBuilder) {
+    public UserController(IdentityService identityService, UserConverter userConverter, UserResourceBuilder userResourceBuilder) {
         this.identityService = identityService;
         this.userConverter = userConverter;
-        this.resourcesBuilder = resourcesBuilder;
+        this.userResourceBuilder = userResourceBuilder;
     }
 
     @RequestMapping(method = RequestMethod.POST)
@@ -68,14 +64,12 @@ public class UserController {
         userDAO.setPassword(user.getPassword());
         identityService.saveUser(userDAO);
 
-        Link selfRel = linkTo(methodOn(getClass()).getUser(user.getUsername())).withSelfRel();
-        return new Resource<>(userConverter.from(userDAO), selfRel);
+        return userResourceBuilder.build(userConverter.from(userDAO));
     }
 
     @RequestMapping(method = RequestMethod.GET)
     public Resources<Resource<User>> getUsers() {
-        Link selfRel = linkTo(methodOn(getClass()).getUsers()).withSelfRel();
-        return resourcesBuilder.build(identityService.createUserQuery().list(), userConverter, selfRel);
+        return userResourceBuilder.build(userConverter.from(identityService.createUserQuery().list()));
     }
 
     @RequestMapping(value = "/{username}", method = RequestMethod.GET)
@@ -85,8 +79,7 @@ public class UserController {
         if (user == null) {
             throw new ActivitiObjectNotFoundException("Could not find a user with id '" + username + "'.", org.activiti.engine.identity.User.class);
         }
-        Link selfRel = linkTo(methodOn(getClass()).getUser(username)).withSelfRel();
-        return new Resource<>(userConverter.from(user), selfRel);
+        return userResourceBuilder.build(userConverter.from(user));
     }
 
 }

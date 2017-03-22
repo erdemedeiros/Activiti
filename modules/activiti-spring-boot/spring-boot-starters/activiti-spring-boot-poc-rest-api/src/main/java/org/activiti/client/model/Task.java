@@ -140,4 +140,8 @@ public class Task {
     this.processInstanceId = processInstanceId;
   }
 
+  public boolean isClaimed() {
+    return assignee != null;
+  }
+
 }

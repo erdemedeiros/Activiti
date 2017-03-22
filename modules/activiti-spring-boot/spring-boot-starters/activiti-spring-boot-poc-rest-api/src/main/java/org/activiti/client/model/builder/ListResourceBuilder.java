@@ -13,17 +13,27 @@
  *
  */
 
-package org.activiti.model.converter;
+package org.activiti.client.model.builder;
 
+
+import org.springframework.hateoas.Resource;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
  */
-public interface ModelConverter <SOURCE, TARGET> {
+@Component
+public class ListResourceBuilder {
 
-    TARGET from(SOURCE source);
-
-    List<TARGET> from(List<SOURCE> sources);
+    public <RESOURCE_TYPE, PARAM_TYPE> List<Resource<RESOURCE_TYPE>> buildResourceList(List<PARAM_TYPE> elements, ResourceBuilder<RESOURCE_TYPE, PARAM_TYPE> resourceBuilder) {
+        List<Resource<RESOURCE_TYPE>> resources = new ArrayList<>();
+        for (PARAM_TYPE element : elements) {
+            resources.add(resourceBuilder.build(element));
+        }
+        return resources;
+    }
 
 }

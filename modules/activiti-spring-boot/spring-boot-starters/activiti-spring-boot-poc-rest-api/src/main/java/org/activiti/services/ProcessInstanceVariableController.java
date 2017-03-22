@@ -15,9 +15,10 @@
 
 package org.activiti.services;
 
+import org.activiti.client.model.ExtendedProcessInstance;
+import org.activiti.client.model.builder.ProcessVariableResourceBuilder;
 import org.activiti.engine.RuntimeService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,9 +26,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
-
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 /**
  * @author Elias Ricken de Medeiros
@@ -37,16 +35,23 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 public class ProcessInstanceVariableController {
 
     private final RuntimeService runtimeService;
+    private final ProcessVariableResourceBuilder variableResourceBuilder;
 
     @Autowired
-    public ProcessInstanceVariableController(RuntimeService runtimeService) {
+    public ProcessInstanceVariableController(RuntimeService runtimeService, ProcessVariableResourceBuilder variableResourceBuilder) {
         this.runtimeService = runtimeService;
+        this.variableResourceBuilder = variableResourceBuilder;
     }
 
     @RequestMapping(method = RequestMethod.GET)
     public Resource<Map<String, Object>> getVariables(@PathVariable String processInstanceId) {
-        Link processInstanceRel = linkTo(methodOn(ProcessInstanceController.class).getProcessInstance(processInstanceId)).withRel("processInstance");
-        return new Resource<>(runtimeService.getVariables(processInstanceId), processInstanceRel);
+        Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
+
+        ExtendedProcessInstance processInstance = new ExtendedProcessInstance();
+        processInstance.setId(processInstanceId);
+        processInstance.setVariables(variables);
+
+        return variableResourceBuilder.build(processInstance);
     }
 
 }
