@@ -1,10 +1,5 @@
 package org.activiti.test.spring.boot;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
@@ -29,6 +24,11 @@ import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.support.GenericHandler;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Test the Spring Integration inbound inboundGateway support.
