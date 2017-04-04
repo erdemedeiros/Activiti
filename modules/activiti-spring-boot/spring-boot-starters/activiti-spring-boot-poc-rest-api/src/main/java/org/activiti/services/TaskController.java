@@ -15,11 +15,18 @@
 
 package org.activiti.services;
 
+import java.util.Map;
+
 import org.activiti.client.model.Task;
-import org.activiti.client.model.builder.TaskResourceBuilder;
+import org.activiti.client.model.resources.TaskResource;
+import org.activiti.client.model.resources.assembler.TaskResourceAssembler;
 import org.activiti.engine.TaskService;
+import org.activiti.engine.task.TaskQuery;
 import org.activiti.model.converter.TaskConverter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
@@ -31,9 +38,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * @author Elias Ricken de Medeiros
  */
@@ -43,32 +47,35 @@ public class TaskController {
 
     private final TaskService taskService;
     private final TaskConverter taskConverter;
-    private final TaskResourceBuilder taskResourceBuilder;
+    private final TaskResourceAssembler taskResourceAssembler;
+    private final PageRetriever pageRetriever;
 
     @Autowired
-    public TaskController(TaskService taskService, TaskConverter taskConverter, TaskResourceBuilder taskResourceBuilder) {
+    public TaskController(TaskService taskService, TaskConverter taskConverter, TaskResourceAssembler taskResourceAssembler, PageRetriever pageRetriever) {
         this.taskService = taskService;
         this.taskConverter = taskConverter;
-        this.taskResourceBuilder = taskResourceBuilder;
+        this.taskResourceAssembler = taskResourceAssembler;
+        this.pageRetriever = pageRetriever;
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    public Resources<Resource<Task>> getTasks() {
-        List<org.activiti.engine.task.Task> tasks = taskService.createTaskQuery().list();
-        return taskResourceBuilder.build(taskConverter.from(tasks));
+    public Resources<TaskResource> getTasks(Pageable pageable, PagedResourcesAssembler<Task> pagedResourcesAssembler) {
+        TaskQuery query = taskService.createTaskQuery();
+        Page<Task> page = pageRetriever.loadPage(query, pageable, taskConverter);
+        return pagedResourcesAssembler.toResource(page, taskResourceAssembler);
     }
 
     @RequestMapping(value = "/{taskId}", method = RequestMethod.GET)
     public Resource<Task> getTask(@PathVariable String taskId) {
         org.activiti.engine.task.Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-        return taskResourceBuilder.build(taskConverter.from(task));
+        return taskResourceAssembler.toResource(taskConverter.from(task));
     }
 
     @RequestMapping(value = "/{taskId}/claim", method = RequestMethod.POST)
     public Resource<Task> claimTask(@PathVariable String taskId, @RequestParam("assignee") String assignee) {
         taskService.claim(taskId, assignee);
         Task task = taskConverter.from(taskService.createTaskQuery().taskId(taskId).singleResult());
-        return  taskResourceBuilder.build(task);
+        return  taskResourceAssembler.toResource(task);
     }
 
     @RequestMapping(value = "/{taskId}/complete", method = RequestMethod.POST)

@@ -13,18 +13,20 @@
  *
  */
 
-package org.activiti.client.model.builder;
+package org.activiti.client.model.resources;
 
+import java.util.Map;
+
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.Resources;
-
-import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
  */
-public interface ResourcesBuilder<RESOURCE_TYPE, PARAM_TYPE> extends ResourceBuilder<RESOURCE_TYPE, PARAM_TYPE> {
+public class VariablesResource extends Resource<Map<String, Object>> {
 
-    Resources<Resource<RESOURCE_TYPE>> build(List<RESOURCE_TYPE> elements);
+    public VariablesResource(Map<String, Object> content, Link... links) {
+        super(content, links);
+    }
 
 }

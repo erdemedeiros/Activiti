@@ -16,17 +16,19 @@
 package org.activiti.services;
 
 import org.activiti.client.model.ProcessDefinition;
-import org.activiti.client.model.builder.ProcessDefinitionResourceBuilder;
+import org.activiti.client.model.resources.ProcessDefinitionResource;
+import org.activiti.client.model.resources.assembler.ProcessDefinitionResourceAssembler;
 import org.activiti.engine.RepositoryService;
+import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.model.converter.ProcessDefinitionConverter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.Resources;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedResources;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
@@ -39,19 +41,23 @@ public class ProcessDefinitionController {
 
     private final ProcessDefinitionConverter processDefinitionConverter;
 
-    private final ProcessDefinitionResourceBuilder processDefinitionResourceBuilder;
+    private final ProcessDefinitionResourceAssembler resourceAssembler;
+
+    private final PageRetriever pageRetriever;
 
     @Autowired
-    public ProcessDefinitionController(RepositoryService repositoryService, ProcessDefinitionConverter processDefinitionConverter, ProcessDefinitionResourceBuilder processDefinitionResourceBuilder) {
+    public ProcessDefinitionController(RepositoryService repositoryService, ProcessDefinitionConverter processDefinitionConverter, ProcessDefinitionResourceAssembler resourceAssembler, PageRetriever pageRetriever) {
         this.repositoryService = repositoryService;
         this.processDefinitionConverter = processDefinitionConverter;
-        this.processDefinitionResourceBuilder = processDefinitionResourceBuilder;
+        this.resourceAssembler = resourceAssembler;
+        this.pageRetriever = pageRetriever;
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    public Resources<Resource<ProcessDefinition>> getProcesses() {
-        List<org.activiti.engine.repository.ProcessDefinition> definitions = repositoryService.createProcessDefinitionQuery().list();
-        return processDefinitionResourceBuilder.build(processDefinitionConverter.from(definitions));
+    public PagedResources<ProcessDefinitionResource> getProcesses(Pageable pageable, PagedResourcesAssembler<ProcessDefinition> pagedResourcesAssembler) {
+        ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery();
+        Page<ProcessDefinition> page = pageRetriever.loadPage(query, pageable, processDefinitionConverter);
+        return pagedResourcesAssembler.toResource(page, resourceAssembler);
     }
 
 }

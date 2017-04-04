@@ -13,18 +13,15 @@
  *
  */
 
-package org.activiti.client.model.builder;
+package org.activiti.client.model.resources.assembler;
 
 import org.activiti.client.model.ProcessDefinition;
+import org.activiti.client.model.resources.ProcessDefinitionResource;
 import org.activiti.services.ProcessDefinitionController;
 import org.activiti.services.ProcessInstanceController;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.Resources;
+import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
@@ -33,27 +30,16 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
  * @author Elias Ricken de Medeiros
  */
 @Component
-public class ProcessDefinitionResourceBuilder implements ResourcesBuilder<ProcessDefinition, ProcessDefinition> {
+public class ProcessDefinitionResourceAssembler extends ResourceAssemblerSupport<ProcessDefinition, ProcessDefinitionResource> {
 
-    private final ListResourceBuilder listResourceBuilder;
-
-    @Autowired
-    public ProcessDefinitionResourceBuilder(ListResourceBuilder listResourceBuilder) {
-        this.listResourceBuilder = listResourceBuilder;
+    public ProcessDefinitionResourceAssembler() {
+        super(ProcessDefinitionController.class, ProcessDefinitionResource.class);
     }
 
     @Override
-    public Resources<Resource<ProcessDefinition>> build(List<ProcessDefinition> processDefinitions) {
-        Link selfRel = linkTo(methodOn(ProcessDefinitionController.class).getProcesses()).withSelfRel();
-        return new Resources<>(listResourceBuilder.buildResourceList(processDefinitions, this), selfRel);
-    }
-
-    @Override
-    public Resource<ProcessDefinition> build(ProcessDefinition processDefinition) {
-        Link selfRel = linkTo(methodOn(ProcessDefinitionController.class).getProcesses()).withSelfRel();
+    public ProcessDefinitionResource toResource(ProcessDefinition processDefinition) {
+        Link selfRel = linkTo(methodOn(ProcessDefinitionController.class).getProcesses(null, null)).withSelfRel();
         Link startProcessLink = linkTo(methodOn(ProcessInstanceController.class).startProcess(null)).withRel("startProcess");
-
-        return new Resource<>(processDefinition, selfRel, startProcessLink);
+        return new ProcessDefinitionResource(processDefinition, selfRel, startProcessLink);
     }
-
 }

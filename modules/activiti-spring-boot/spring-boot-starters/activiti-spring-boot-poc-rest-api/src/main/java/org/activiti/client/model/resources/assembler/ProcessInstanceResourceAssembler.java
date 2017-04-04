@@ -13,18 +13,15 @@
  *
  */
 
-package org.activiti.client.model.builder;
+package org.activiti.client.model.resources.assembler;
 
 import org.activiti.client.model.ProcessInstance;
+import org.activiti.client.model.resources.ProcessInstanceResource;
 import org.activiti.services.ProcessInstanceController;
 import org.activiti.services.ProcessInstanceVariableController;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.Resources;
+import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
@@ -33,27 +30,18 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
  * @author Elias Ricken de Medeiros
  */
 @Component
-public class ProcessInstanceResourceBuilder implements ResourcesBuilder<ProcessInstance, ProcessInstance> {
+public class ProcessInstanceResourceAssembler extends ResourceAssemblerSupport<ProcessInstance, ProcessInstanceResource> {
 
-    private final ListResourceBuilder listResourceBuilder;
-
-    @Autowired
-    public ProcessInstanceResourceBuilder(ListResourceBuilder listResourceBuilder) {
-        this.listResourceBuilder = listResourceBuilder;
+    public ProcessInstanceResourceAssembler() {
+        super(ProcessInstanceController.class, ProcessInstanceResource.class);
     }
 
     @Override
-    public Resource<ProcessInstance> build(ProcessInstance processInstance) {
-        Link processInstancesRel = linkTo(methodOn(ProcessInstanceController.class).getProcessInstances()).withRel("processInstances");
+    public ProcessInstanceResource toResource(ProcessInstance processInstance) {
+        Link processInstancesRel = linkTo(methodOn(ProcessInstanceController.class).getProcessInstances(null, null)).withRel("processInstances");
         Link selfLink = linkTo(methodOn(ProcessInstanceController.class).getProcessInstance(processInstance.getId())).withSelfRel();
         Link variablesLink = linkTo(methodOn(ProcessInstanceVariableController.class).getVariables(processInstance.getId())).withRel("variables");
-        return new Resource<>(processInstance, selfLink, variablesLink, processInstancesRel);
-    }
-
-    @Override
-    public Resources<Resource<ProcessInstance>> build(List<ProcessInstance> processInstances) {
-        Link selfRel = linkTo(methodOn(ProcessInstanceController.class).getProcessInstances()).withSelfRel();
-        return new Resources<>(listResourceBuilder.buildResourceList(processInstances, this), selfRel);
+        return new ProcessInstanceResource(processInstance, selfLink, variablesLink, processInstancesRel);
     }
 
 }

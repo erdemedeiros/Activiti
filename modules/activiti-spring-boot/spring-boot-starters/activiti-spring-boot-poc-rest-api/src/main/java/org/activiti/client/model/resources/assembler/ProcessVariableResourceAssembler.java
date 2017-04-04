@@ -13,16 +13,15 @@
  *
  */
 
-package org.activiti.client.model.builder;
+package org.activiti.client.model.resources.assembler;
 
 import org.activiti.client.model.ExtendedProcessInstance;
+import org.activiti.client.model.resources.VariablesResource;
 import org.activiti.services.ProcessInstanceController;
 import org.activiti.services.ProcessInstanceVariableController;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
@@ -31,12 +30,17 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
  * @author Elias Ricken de Medeiros
  */
 @Component
-public class ProcessVariableResourceBuilder implements ResourceBuilder<Map<String, Object>, ExtendedProcessInstance> {
+public class ProcessVariableResourceAssembler extends ResourceAssemblerSupport<ExtendedProcessInstance, VariablesResource> {
+
+    public ProcessVariableResourceAssembler() {
+        super(ProcessInstanceVariableController.class, VariablesResource.class);
+    }
 
     @Override
-    public Resource<Map<String, Object>> build(ExtendedProcessInstance processInstance) {
+    public VariablesResource toResource(ExtendedProcessInstance processInstance) {
         Link selfRel = linkTo(methodOn(ProcessInstanceVariableController.class).getVariables(processInstance.getId())).withSelfRel();
         Link processInstanceRel = linkTo(methodOn(ProcessInstanceController.class).getProcessInstance(processInstance.getId())).withRel("processInstance");
-        return new Resource<>(processInstance.getVariables(), selfRel, processInstanceRel);
+        return new VariablesResource(processInstance.getVariables(), selfRel, processInstanceRel);
     }
+
 }

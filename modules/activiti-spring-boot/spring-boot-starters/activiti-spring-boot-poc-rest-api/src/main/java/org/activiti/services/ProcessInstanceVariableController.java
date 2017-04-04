@@ -15,8 +15,10 @@
 
 package org.activiti.services;
 
+import java.util.Map;
+
 import org.activiti.client.model.ExtendedProcessInstance;
-import org.activiti.client.model.builder.ProcessVariableResourceBuilder;
+import org.activiti.client.model.resources.assembler.ProcessVariableResourceAssembler;
 import org.activiti.engine.RuntimeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Resource;
@@ -24,8 +26,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 /**
  * @author Elias Ricken de Medeiros
@@ -35,10 +35,10 @@ import java.util.Map;
 public class ProcessInstanceVariableController {
 
     private final RuntimeService runtimeService;
-    private final ProcessVariableResourceBuilder variableResourceBuilder;
+    private final ProcessVariableResourceAssembler variableResourceBuilder;
 
     @Autowired
-    public ProcessInstanceVariableController(RuntimeService runtimeService, ProcessVariableResourceBuilder variableResourceBuilder) {
+    public ProcessInstanceVariableController(RuntimeService runtimeService, ProcessVariableResourceAssembler variableResourceBuilder) {
         this.runtimeService = runtimeService;
         this.variableResourceBuilder = variableResourceBuilder;
     }
@@ -51,7 +51,7 @@ public class ProcessInstanceVariableController {
         processInstance.setId(processInstanceId);
         processInstance.setVariables(variables);
 
-        return variableResourceBuilder.build(processInstance);
+        return variableResourceBuilder.toResource(processInstance);
     }
 
 }

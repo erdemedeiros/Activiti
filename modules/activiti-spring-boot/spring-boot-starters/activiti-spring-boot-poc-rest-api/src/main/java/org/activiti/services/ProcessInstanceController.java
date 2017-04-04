@@ -17,11 +17,16 @@ package org.activiti.services;
 
 import org.activiti.client.model.ExtendedProcessInstance;
 import org.activiti.client.model.ProcessInstance;
-import org.activiti.client.model.builder.ProcessInstanceResourceBuilder;
+import org.activiti.client.model.resources.ProcessInstanceResource;
+import org.activiti.client.model.resources.assembler.ProcessInstanceResourceAssembler;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.runtime.ProcessInstanceBuilder;
+import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.activiti.model.converter.ProcessInstanceConverter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,8 +34,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
@@ -43,19 +46,23 @@ public class ProcessInstanceController {
 
     private final RuntimeService runtimeService;
 
-    private final ProcessInstanceResourceBuilder processInstanceResourceBuilder;
+    private final ProcessInstanceResourceAssembler resourceAssembler;
+
+    private final PageRetriever pageRetriever;
 
     @Autowired
-    public ProcessInstanceController(ProcessInstanceConverter processInstanceConverter, RuntimeService runtimeService, ProcessInstanceResourceBuilder processInstanceResourceBuilder) {
+    public ProcessInstanceController(ProcessInstanceConverter processInstanceConverter, RuntimeService runtimeService, ProcessInstanceResourceAssembler resourceAssembler, PageRetriever pageRetriever) {
         this.processInstanceConverter = processInstanceConverter;
         this.runtimeService = runtimeService;
-        this.processInstanceResourceBuilder = processInstanceResourceBuilder;
+        this.resourceAssembler = resourceAssembler;
+        this.pageRetriever = pageRetriever;
     }
 
-    @RequestMapping(method = RequestMethod.GET)
-    public Resources<Resource<ProcessInstance>> getProcessInstances(){
-        List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().list();
-        return processInstanceResourceBuilder.build(processInstanceConverter.from(processInstances));
+    @RequestMapping(method = RequestMethod.GET, params = {"page", "size"})
+    public Resources<ProcessInstanceResource> getProcessInstances(Pageable pageable, PagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler){
+        ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+        Page<ProcessInstance> page = pageRetriever.loadPage(query, pageable, processInstanceConverter);
+        return pagedResourcesAssembler.toResource(page, resourceAssembler);
     }
 
     @RequestMapping(method = RequestMethod.POST)
@@ -64,13 +71,13 @@ public class ProcessInstanceController {
         builder.processDefinitionKey(processInstance.getProcessDefinitionKey());
         builder.variables(processInstance.getVariables());
 
-        return processInstanceResourceBuilder.build(processInstanceConverter.from(builder.start()));
+        return resourceAssembler.toResource(processInstanceConverter.from(builder.start()));
     }
 
     @RequestMapping(value = "/{processInstanceId}", method = RequestMethod.GET)
     public Resource<ProcessInstance> getProcessInstance(@PathVariable String processInstanceId){
         org.activiti.engine.runtime.ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
-        return processInstanceResourceBuilder.build(processInstanceConverter.from(processInstance));
+        return resourceAssembler.toResource(processInstanceConverter.from(processInstance));
     }
 
 }

@@ -16,12 +16,17 @@
 package org.activiti.services;
 
 import org.activiti.client.model.User;
-import org.activiti.client.model.builder.UserResourceBuilder;
+import org.activiti.client.model.resources.UserResource;
+import org.activiti.client.model.resources.assembler.UserResourceAssembler;
 import org.activiti.engine.ActivitiIllegalArgumentException;
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.engine.IdentityService;
+import org.activiti.engine.identity.UserQuery;
 import org.activiti.model.converter.UserConverter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,13 +47,16 @@ public class UserController {
 
     private final UserConverter userConverter;
 
-    private final UserResourceBuilder userResourceBuilder;
+    private final UserResourceAssembler userResourceAssembler;
+
+    private final PageRetriever pageRetriever;
 
     @Autowired
-    public UserController(IdentityService identityService, UserConverter userConverter, UserResourceBuilder userResourceBuilder) {
+    public UserController(IdentityService identityService, UserConverter userConverter, UserResourceAssembler userResourceAssembler, PageRetriever pageRetriever) {
         this.identityService = identityService;
         this.userConverter = userConverter;
-        this.userResourceBuilder = userResourceBuilder;
+        this.userResourceAssembler = userResourceAssembler;
+        this.pageRetriever = pageRetriever;
     }
 
     @RequestMapping(method = RequestMethod.POST)
@@ -64,12 +72,14 @@ public class UserController {
         userDAO.setPassword(user.getPassword());
         identityService.saveUser(userDAO);
 
-        return userResourceBuilder.build(userConverter.from(userDAO));
+        return userResourceAssembler.toResource(userConverter.from(userDAO));
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    public Resources<Resource<User>> getUsers() {
-        return userResourceBuilder.build(userConverter.from(identityService.createUserQuery().list()));
+    public Resources<UserResource> getUsers(Pageable pageable, PagedResourcesAssembler<User> pagedResourcesAssembler) {
+        UserQuery query = identityService.createUserQuery();
+        Page<User> page = pageRetriever.loadPage(query, pageable, userConverter);
+        return pagedResourcesAssembler.toResource(page, userResourceAssembler);
     }
 
     @RequestMapping(value = "/{username}", method = RequestMethod.GET)
@@ -79,7 +89,7 @@ public class UserController {
         if (user == null) {
             throw new ActivitiObjectNotFoundException("Could not find a user with id '" + username + "'.", org.activiti.engine.identity.User.class);
         }
-        return userResourceBuilder.build(userConverter.from(user));
+        return userResourceAssembler.toResource(userConverter.from(user));
     }
 
 }

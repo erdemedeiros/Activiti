@@ -13,27 +13,18 @@
  *
  */
 
-package org.activiti.client.model.builder;
+package org.activiti.client.model.resources;
 
-
+import org.activiti.client.model.ProcessInstance;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
-import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Elias Ricken de Medeiros
  */
-@Component
-public class ListResourceBuilder {
+public class ProcessInstanceResource extends Resource<ProcessInstance> {
 
-    public <RESOURCE_TYPE, PARAM_TYPE> List<Resource<RESOURCE_TYPE>> buildResourceList(List<PARAM_TYPE> elements, ResourceBuilder<RESOURCE_TYPE, PARAM_TYPE> resourceBuilder) {
-        List<Resource<RESOURCE_TYPE>> resources = new ArrayList<>();
-        for (PARAM_TYPE element : elements) {
-            resources.add(resourceBuilder.build(element));
-        }
-        return resources;
+    public ProcessInstanceResource(ProcessInstance processInstance, Link... links) {
+        super(processInstance, links);
     }
-
 }
