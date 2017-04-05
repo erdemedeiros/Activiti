@@ -26,6 +26,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.PagedResources;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -54,10 +55,16 @@ public class ProcessDefinitionController {
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    public PagedResources<ProcessDefinitionResource> getProcesses(Pageable pageable, PagedResourcesAssembler<ProcessDefinition> pagedResourcesAssembler) {
+    public PagedResources<ProcessDefinitionResource> getProcessDefinitions(Pageable pageable, PagedResourcesAssembler<ProcessDefinition> pagedResourcesAssembler) {
         ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery();
         Page<ProcessDefinition> page = pageRetriever.loadPage(query, pageable, processDefinitionConverter);
         return pagedResourcesAssembler.toResource(page, resourceAssembler);
+    }
+
+    @RequestMapping(value = "/{id}")
+    public ProcessDefinitionResource getProcessDefinition(@PathVariable String id){
+        org.activiti.engine.repository.ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionId(id).singleResult();
+        return resourceAssembler.toResource(processDefinitionConverter.from(processDefinition));
     }
 
 }

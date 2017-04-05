@@ -38,7 +38,7 @@ public class ProcessDefinitionResourceAssembler extends ResourceAssemblerSupport
 
     @Override
     public ProcessDefinitionResource toResource(ProcessDefinition processDefinition) {
-        Link selfRel = linkTo(methodOn(ProcessDefinitionController.class).getProcesses(null, null)).withSelfRel();
+        Link selfRel = linkTo(methodOn(ProcessDefinitionController.class).getProcessDefinition(processDefinition.getId())).withSelfRel();
         Link startProcessLink = linkTo(methodOn(ProcessInstanceController.class).startProcess(null)).withRel("startProcess");
         return new ProcessDefinitionResource(processDefinition, selfRel, startProcessLink);
     }
