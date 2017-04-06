@@ -19,7 +19,6 @@ import org.activiti.client.model.ProcessDefinition;
 import org.activiti.client.model.resources.ProcessDefinitionResource;
 import org.activiti.client.model.resources.assembler.ProcessDefinitionResourceAssembler;
 import org.activiti.engine.RepositoryService;
-import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.model.converter.ProcessDefinitionConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -44,20 +43,19 @@ public class ProcessDefinitionController {
 
     private final ProcessDefinitionResourceAssembler resourceAssembler;
 
-    private final PageRetriever pageRetriever;
+    private final PageableRepositoryService pageableRepositoryService;
 
     @Autowired
-    public ProcessDefinitionController(RepositoryService repositoryService, ProcessDefinitionConverter processDefinitionConverter, ProcessDefinitionResourceAssembler resourceAssembler, PageRetriever pageRetriever) {
+    public ProcessDefinitionController(RepositoryService repositoryService, ProcessDefinitionConverter processDefinitionConverter, ProcessDefinitionResourceAssembler resourceAssembler, PageableRepositoryService pageableRepositoryService) {
         this.repositoryService = repositoryService;
         this.processDefinitionConverter = processDefinitionConverter;
         this.resourceAssembler = resourceAssembler;
-        this.pageRetriever = pageRetriever;
+        this.pageableRepositoryService = pageableRepositoryService;
     }
 
     @RequestMapping(method = RequestMethod.GET)
     public PagedResources<ProcessDefinitionResource> getProcessDefinitions(Pageable pageable, PagedResourcesAssembler<ProcessDefinition> pagedResourcesAssembler) {
-        ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery();
-        Page<ProcessDefinition> page = pageRetriever.loadPage(query, pageable, processDefinitionConverter);
+        Page<ProcessDefinition> page = pageableRepositoryService.getProcessDefinitions(pageable);
         return pagedResourcesAssembler.toResource(page, resourceAssembler);
     }
 

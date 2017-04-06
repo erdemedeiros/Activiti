@@ -21,7 +21,6 @@ import org.activiti.client.model.resources.ProcessInstanceResource;
 import org.activiti.client.model.resources.assembler.ProcessInstanceResourceAssembler;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.runtime.ProcessInstanceBuilder;
-import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.activiti.model.converter.ProcessInstanceConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,20 +47,19 @@ public class ProcessInstanceController {
 
     private final ProcessInstanceResourceAssembler resourceAssembler;
 
-    private final PageRetriever pageRetriever;
+    private PageableProcessInstanceService pageableProcessInstanceService;
 
     @Autowired
-    public ProcessInstanceController(ProcessInstanceConverter processInstanceConverter, RuntimeService runtimeService, ProcessInstanceResourceAssembler resourceAssembler, PageRetriever pageRetriever) {
+    public ProcessInstanceController(ProcessInstanceConverter processInstanceConverter, RuntimeService runtimeService, ProcessInstanceResourceAssembler resourceAssembler, PageableProcessInstanceService pageableProcessInstanceService) {
         this.processInstanceConverter = processInstanceConverter;
         this.runtimeService = runtimeService;
         this.resourceAssembler = resourceAssembler;
-        this.pageRetriever = pageRetriever;
+        this.pageableProcessInstanceService = pageableProcessInstanceService;
     }
 
     @RequestMapping(method = RequestMethod.GET, params = {"page", "size"})
     public Resources<ProcessInstanceResource> getProcessInstances(Pageable pageable, PagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler){
-        ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
-        Page<ProcessInstance> page = pageRetriever.loadPage(query, pageable, processInstanceConverter);
+        Page<ProcessInstance> page = pageableProcessInstanceService.getProcessInstances(pageable);
         return pagedResourcesAssembler.toResource(page, resourceAssembler);
     }
 
